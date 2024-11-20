@@ -152,8 +152,8 @@ static PyObject *Symnmf_Symnmf(PyObject *self, PyObject *args) {
     W = create_c_matrix(lst2);
 
     ans = symnmf(H,W);
-    free_matrix(H);
-    free_matrix(W);
+    //free_matrix(H);
+    //free_matrix(W);
 
     return create_py_matrix(ans);
 }
