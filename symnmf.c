@@ -30,12 +30,12 @@ typedef struct {
  */
 void print_matrix(Matrix matrix) {
     int i,j;
-    if(matrix == NULL) {
+    if(matrix.table == NULL) {
         return;
     }
     for(i = 0; i < matrix.n_rows; i++) {
         for(j = 0; j < matrix.n_cols; j++) {
-            printf("%.4f,",matrix[i][j]);
+            printf("%.4f,",matrix.table[i][j]);
         }
         printf("\n");
     }
@@ -77,7 +77,7 @@ List_vectors read_points(char* filename){
     free(token);
     fclose(file);
 
-    vector.size = count;
+    vectors.size = count;
     /*N = count;
     dim = vectors[0].len;*/
     return vectors;
@@ -86,19 +86,20 @@ List_vectors read_points(char* filename){
 void free_matrix(Matrix matrix) {
     int i;
     for (i = 0; i < matrix.n_rows; i++) {
-        free(matrix[i]);
+        free(matrix.table[i]);
     }
-    free(matrix);
+    free(matrix.table);
+    /*free(matrix);*/
 }
 
 double L2Norm(Vector x1) {
     int i;
     double sum = 0;
-    if(x1 == NULL) {
+    if(x1.x == NULL) {
         return 0;
     }
     for(i = 0; i < x1.len; i++) {
-        sum += x1[i]*x1[i];
+        sum += x1.x[i]*x1.x[i];
     }
     return sqrt(sum);
 }
@@ -106,29 +107,31 @@ double L2Norm(Vector x1) {
 double EuclidDist(Vector x1, Vector x2) {
     int i,dim;
     double result;
+    Vector y;
     dim = x1.len;
-    double* y = calloc(dim,sizeof(double));
+    y.len = dim;
+    y.x = calloc(dim,sizeof(double));
     for(i = 0; i < dim; i++) {
-        y[i] = x1[i] - x2[i];
+        y.x[i] = x1.x[i] - x2.x[i];
     }
     result = pow(L2Norm(y),2);
-    free(y);
+    /*free(y);*/
     return result;
 }
 
 Matrix sym(List_vectors vectors) {
     int N = vectors.size;
     Matrix matrix;
+    int i,j;
     matrix.n_rows = matrix.n_cols = N;
     matrix.table = calloc(N,sizeof(double*));
-    int i,j;
     for(i = 0; i < N; i++) {
         matrix.table[i] = calloc(N,sizeof(double));
     }
     for(i = 0; i < N; i++) {
         for(j = 0; j < N; j++) {
             if(i!=j) {
-                double target = EuclidDist(vectors.v_list[i].x,vectors.v_list[j].x);
+                double target = EuclidDist(vectors.v_list[i],vectors.v_list[j]);
                 matrix.table[i][j] = exp(-target/2);
             }
             else {
@@ -137,7 +140,7 @@ Matrix sym(List_vectors vectors) {
         }
     }
     /*free_matrix(matrix.table,N);*/
-    return matrix.table;
+    return matrix;
 }
 
 Matrix ddg(List_vectors vectors) {
@@ -147,14 +150,14 @@ Matrix ddg(List_vectors vectors) {
     double sum;
     int N = vectors.size;
 
-    matrix.n_rows = matrix.n_cols = N;
-    matrix.table = sym(vectors);
+    /*matrix.n_rows = matrix.n_cols = N;*/
+    matrix = sym(vectors);
 
     D.n_rows = D.n_cols = N;
     D.table = calloc(N,sizeof(double*));
 
     if(matrix.table==NULL) {
-        return 0;
+        return matrix;
     }
     for(i = 0; i < N; i++) {
         D.table[i] = calloc(N,sizeof(double));
@@ -172,18 +175,18 @@ Matrix ddg(List_vectors vectors) {
 }
 
 Matrix norm(List_vectors vectors) {
-    int N = vecotrs.size;
+    int N = vectors.size;
     int i,j;
     double tmp;
     Matrix A,D;
     Matrix result;
-    Matrix A = sym(vectors);
-    Matrix D = ddg(vectors);
+    A = sym(vectors);
+    D = ddg(vectors);
     result.n_rows = result.n_cols = N;
 
     result.table = calloc(N,sizeof(double*));
     if(A.table==NULL || D.table==NULL) {
-        return 0;
+        return result;
     }
     for(i = 0; i < N; i++) {
         result.table[i] = calloc(N,sizeof(double));
@@ -200,18 +203,18 @@ Matrix norm(List_vectors vectors) {
 }
 void multiplication(Matrix A, Matrix B, Matrix* C){
     int i,j,l;
-    *C.n_rows = A.n_rows;
-    *C.n_cols = B.n_cols;
-    *C.table = calloc(*C.n_rows,sizeof(double*));
-    for(i = 0; i < *C.n_rows; i++) {
-        *C.table[i] = calloc(*C.n_cols,sizeof(double));
+    C->n_rows = A.n_rows;
+    C->n_cols = B.n_cols;
+    C->table = calloc(C->n_rows,sizeof(double*));
+    for(i = 0; i < C->n_rows; i++) {
+        C->table[i] = calloc(C->n_cols,sizeof(double));
     }
 
     /*calculate result*/
-    for(i=0;i<*C.n_rows;i++){
-        for(j=0;j<*C.n_cols;j++){
+    for(i=0;i<C->n_rows;i++){
+        for(j=0;j<C->n_cols;j++){
             for(l=0;l<A.n_cols;l++){
-                *C[i][j]+=(A[i][l])*(B[l][j]);
+                C->table[i][j]+=(A.table[i][l])*(B.table[l][j]);
             }
         }
     }
@@ -223,7 +226,7 @@ double calc_diff(Matrix A, Matrix B){
 
     for(i=0;i<A.n_rows;i++){
         for(j=0;j<A.n_cols;j++)
-            diff+=pow(A[i][j]-B[i][j],2);
+            diff+=pow(A.table[i][j]-B.table[i][j],2);
     }
     diff=sqrt(diff);
     return diff;
@@ -255,23 +258,29 @@ Matrix symnmf(Matrix H, Matrix W){
     Matrix HHTH;
     Matrix HHT;
 
-    double diff,beta;
+    double diff = 1e3,beta = 0.5;
     int iter = 0,i,j;
 
-    last_H.n_rows = H.n_rows;
-    last_H.n_cols = H.n_cols;
+    last_H = H;
+
+    cur_H.n_rows = H.n_rows;
+    cur_H.n_cols = H.n_cols;
+    cur_H.table = calloc(cur_H.n_rows,sizeof(double*));
+    for(i = 0; i < cur_H.n_rows; i++){
+        cur_H.table[i] = calloc(cur_H.n_cols,sizeof(double));
+    }
+
     for(i = 0; i < H.n_rows; i++){
         for(j = 0; j < H.n_cols; j++){
-            last_H.table[i][j] = H.table[i][j];
+            cur_H.table[i][j] = H.table[i][j];
         }
     }
-    beta = 0.5;
     
     while(diff >= eps && iter < max_iter){
-        multiplication(W,H,WH);
+        multiplication(W,H,&WH);
         HT = transpose(H);
-        multiplication(H,HT,HHT);
-        multiplication(HT,H,HHTH);
+        multiplication(H,HT,&HHT);
+        multiplication(HT,H,&HHTH);
 
         for(i = 0; i < H.n_rows; i++){
             for(j = 0; j < H.n_cols; j++){
@@ -315,12 +324,12 @@ int main(int argc, char* argv[]) {
     else if(strcmp(argv[1],"norm")==0) {
         result = norm(vectors);
     }
-    print_matrix(result,N,N);
-    free_matrix(result,N);
-    for (i = 0; i < N; i++) {
+    print_matrix(result);
+    free_matrix(result);
+    for (i = 0; i < vectors.size; i++) {
         free(vectors.v_list[i].x);
     }
-    free(vectors.v_list[i]);
-    free(vectors);
+    /*free(vectors.v_list[i]);
+    free(vectors);*/
     return 0;
 }
