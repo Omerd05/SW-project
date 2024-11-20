@@ -235,7 +235,6 @@ Matrix transpose(Matrix A){
     for(i = 0; i < A_T.n_rows; i++){
         A_T.table[i] = calloc(A_T.n_cols,sizeof(double));
     }
-    //printf("ISGOOD\n");
 
     for(i = 0; i < A_T.n_rows; i++){
         for(j = 0; j < A_T.n_cols; j++){
@@ -249,27 +248,17 @@ double calc_diff(Matrix A, Matrix B){
     double diff=0;
     int i,j;
 
-    for(i = 0; i < A.n_rows; i++){
-        for(j = 0; j < A.n_cols; j++){
-            printf("%f ",A.table[i][j]);
-        }
-        printf("\n");
-    }
+    print_matrix(A);
     printf("\n");
 
-    for(i = 0; i < B.n_rows; i++){
-        for(j = 0; j < B.n_cols; j++){
-            printf("%f ",B.table[i][j]);
-        }
-        printf("\n");
-    }
+    print_matrix(B);
     printf("\n");
 
     for(i=0;i<A.n_rows;i++){
         for(j=0;j<A.n_cols;j++)
             diff+=pow(A.table[i][j]-B.table[i][j],2);
     }
-    diff=sqrt(diff);
+    //diff=sqrt(diff);
     return diff;
 }
 
@@ -305,7 +294,7 @@ Matrix symnmf(Matrix H, Matrix W){
 
         for(i = 0; i < H.n_rows; i++){
             for(j = 0; j < H.n_cols; j++){
-                double val = last_H.table[i][j]*(1-beta+beta*(WH.table[i][j])/(HHTH.table[i][j]));
+                double val = last_H.table[i][j]*(1-beta+(beta*(WH.table[i][j])/(HHTH.table[i][j])));
                 cur_H.table[i][j] = val;
             }
         }
@@ -317,12 +306,15 @@ Matrix symnmf(Matrix H, Matrix W){
 
         diff = calc_diff(last_H,cur_H);
 
-        cur_H.n_rows = last_H.n_rows;
-        cur_H.n_cols = last_H.n_cols;
+        if(iter > 0){
+            //free_matrix(last_H);
+        }
+        last_H.n_rows = cur_H.n_rows;
+        last_H.n_cols = cur_H.n_cols;
 
         for(i = 0; i < cur_H.n_rows; i++){
             for(j = 0; j < cur_H.n_cols; j++){
-                cur_H.table[i][j] = last_H.table[i][j];
+                last_H.table[i][j] = cur_H.table[i][j];
             }
         }
 
@@ -335,7 +327,7 @@ Matrix symnmf(Matrix H, Matrix W){
     }
     printf("diff : %f\n",diff);
 
-    return last_H;
+    return cur_H;
 }
 
 int main(int argc, char* argv[]) {
