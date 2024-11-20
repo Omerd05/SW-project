@@ -65,9 +65,8 @@ elif goal=='symnmf':
     lower_bound = 0
     upper_bound = 2 * math.sqrt(mid / k)
     h = np.random.uniform(lower_bound, upper_bound, (n, k)).tolist()
-    print(h)
+    #print(h)
     res=snmf.symnmf(h,w)
 
 for row in res:
-    #print("Here")
     print(','.join(f'{val:.4f}' for val in row))
