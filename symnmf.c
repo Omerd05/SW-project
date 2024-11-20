@@ -210,6 +210,11 @@ void multiplication(Matrix A, Matrix B, Matrix* C){
         C->table[i] = calloc(C->n_cols,sizeof(double));
     }
 
+    //printf("A, n_rows : %d, n_cols : %d\n",A.n_rows,A.n_cols);
+    //printf("B, n_rows : %d, n_cols : %d\n",B.n_rows,B.n_cols);
+    //printf("C, n_rows : %d, n_cols : %d\n",C->n_rows,C->n_cols);
+
+
     /*calculate result*/
     for(i=0;i<C->n_rows;i++){
         for(j=0;j<C->n_cols;j++){
@@ -220,9 +225,45 @@ void multiplication(Matrix A, Matrix B, Matrix* C){
     }
     return;
 }
+
+Matrix transpose(Matrix A){
+    Matrix A_T;
+    int i,j;
+    A_T.n_rows = A.n_cols;
+    A_T.n_cols = A.n_rows;
+    A_T.table = calloc(A_T.n_rows,sizeof(double*));
+    for(i = 0; i < A_T.n_rows; i++){
+        A_T.table[i] = calloc(A_T.n_cols,sizeof(double));
+    }
+    //printf("ISGOOD\n");
+
+    for(i = 0; i < A_T.n_rows; i++){
+        for(j = 0; j < A_T.n_cols; j++){
+            A_T.table[i][j] = A.table[j][i];
+        }
+    }
+    return A_T;
+}
+
 double calc_diff(Matrix A, Matrix B){
     double diff=0;
     int i,j;
+
+    for(i = 0; i < A.n_rows; i++){
+        for(j = 0; j < A.n_cols; j++){
+            printf("%f ",A.table[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+
+    for(i = 0; i < B.n_rows; i++){
+        for(j = 0; j < B.n_cols; j++){
+            printf("%f ",B.table[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
 
     for(i=0;i<A.n_rows;i++){
         for(j=0;j<A.n_cols;j++)
@@ -230,24 +271,6 @@ double calc_diff(Matrix A, Matrix B){
     }
     diff=sqrt(diff);
     return diff;
-}
-
-Matrix transpose(Matrix A){
-    Matrix A_T;
-    int i,j;
-    A_T.n_rows = A.n_rows;
-    A_T.n_cols = A.n_cols;
-    A_T.table = calloc(A_T.n_rows,sizeof(double*));
-    for(i = 0; i < A_T.n_rows; i++){
-        A_T.table[i] = calloc(A_T.n_cols,sizeof(double));
-    }
-
-    for(i = 0; i < A.n_rows; i++){
-        for(j = 0; j < A.n_cols; j++){
-            A_T.table[i][j] = A.table[j][i];
-        }
-    }
-    return A_T;
 }
 
 Matrix symnmf(Matrix H, Matrix W){
@@ -258,7 +281,7 @@ Matrix symnmf(Matrix H, Matrix W){
     Matrix HHTH;
     Matrix HHT;
 
-    double diff = 1e3,beta = 0.5;
+    double diff = 1,beta = 0.5;
     int iter = 0,i,j;
 
     last_H = H;
@@ -269,18 +292,16 @@ Matrix symnmf(Matrix H, Matrix W){
     for(i = 0; i < cur_H.n_rows; i++){
         cur_H.table[i] = calloc(cur_H.n_cols,sizeof(double));
     }
-
-    for(i = 0; i < H.n_rows; i++){
-        for(j = 0; j < H.n_cols; j++){
-            cur_H.table[i][j] = H.table[i][j];
-        }
-    }
     
     while(diff >= eps && iter < max_iter){
         multiplication(W,H,&WH);
+        //printf("%d\n",iter);
         HT = transpose(H);
+        //printf("%d\n",iter);
         multiplication(H,HT,&HHT);
-        multiplication(HT,H,&HHTH);
+        //printf("%d\n",iter);
+        multiplication(HHT,H,&HHTH);
+        //printf("%d\n",iter);
 
         for(i = 0; i < H.n_rows; i++){
             for(j = 0; j < H.n_cols; j++){
@@ -296,12 +317,23 @@ Matrix symnmf(Matrix H, Matrix W){
 
         diff = calc_diff(last_H,cur_H);
 
-        if(iter > 0){
-            free_matrix(last_H);
+        cur_H.n_rows = last_H.n_rows;
+        cur_H.n_cols = last_H.n_cols;
+
+        for(i = 0; i < cur_H.n_rows; i++){
+            for(j = 0; j < cur_H.n_cols; j++){
+                cur_H.table[i][j] = last_H.table[i][j];
+            }
         }
-        last_H = cur_H;
+
+        if(iter > 0){
+            //free_matrix(last_H);
+        }
+
+        printf("Iter %d Made it to end\n",iter);
         iter++;
     }
+    printf("diff : %f\n",diff);
 
     return last_H;
 }
