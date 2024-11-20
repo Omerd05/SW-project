@@ -169,8 +169,6 @@ Matrix ddg(List_vectors vectors) {
         }
         D.table[i][i] = sum;
     }
-    /*free_matrix(matrix.table,N);*/
-    /*free_matrix(D.table,N);*/
     return D;
 }
 
@@ -210,11 +208,6 @@ void multiplication(Matrix A, Matrix B, Matrix* C){
         C->table[i] = calloc(C->n_cols,sizeof(double));
     }
 
-    //printf("A, n_rows : %d, n_cols : %d\n",A.n_rows,A.n_cols);
-    //printf("B, n_rows : %d, n_cols : %d\n",B.n_rows,B.n_cols);
-    //printf("C, n_rows : %d, n_cols : %d\n",C->n_rows,C->n_cols);
-
-
     /*calculate result*/
     for(i=0;i<C->n_rows;i++){
         for(j=0;j<C->n_cols;j++){
@@ -247,68 +240,40 @@ Matrix transpose(Matrix A){
 double calc_diff(Matrix A, Matrix B){
     double diff=0;
     int i,j;
-
-    print_matrix(A);
-    printf("\n");
-
-    print_matrix(B);
-    printf("\n");
-
     for(i=0;i<A.n_rows;i++){
         for(j=0;j<A.n_cols;j++)
             diff+=pow(A.table[i][j]-B.table[i][j],2);
     }
-    //diff=sqrt(diff);
     return diff;
 }
 
 Matrix symnmf(Matrix H, Matrix W){
-    Matrix last_H;
-    Matrix cur_H;
-    Matrix WH;
-    Matrix HT;
-    Matrix HHTH;
-    Matrix HHT;
-
+    Matrix last_H,cur_H,WH,HT,HHTH,HHT;
     double diff = 1,beta = 0.5;
     int iter = 0,i,j;
-
     last_H = H;
-
     cur_H.n_rows = H.n_rows;
     cur_H.n_cols = H.n_cols;
     cur_H.table = calloc(cur_H.n_rows,sizeof(double*));
     for(i = 0; i < cur_H.n_rows; i++){
         cur_H.table[i] = calloc(cur_H.n_cols,sizeof(double));
     }
-    
     while(diff >= eps && iter < max_iter){
         multiplication(W,H,&WH);
-        //printf("%d\n",iter);
         HT = transpose(H);
-        //printf("%d\n",iter);
         multiplication(H,HT,&HHT);
-        //printf("%d\n",iter);
         multiplication(HHT,H,&HHTH);
-        //printf("%d\n",iter);
-
         for(i = 0; i < H.n_rows; i++){
             for(j = 0; j < H.n_cols; j++){
                 double val = last_H.table[i][j]*(1-beta+(beta*(WH.table[i][j])/(HHTH.table[i][j])));
                 cur_H.table[i][j] = val;
             }
         }
-
         free_matrix(WH);
         free_matrix(HT);
         free_matrix(HHT);
         free_matrix(HHTH);
-
         diff = calc_diff(last_H,cur_H);
-
-        if(iter > 0){
-            //free_matrix(last_H);
-        }
         last_H.n_rows = cur_H.n_rows;
         last_H.n_cols = cur_H.n_cols;
 
@@ -317,16 +282,9 @@ Matrix symnmf(Matrix H, Matrix W){
                 last_H.table[i][j] = cur_H.table[i][j];
             }
         }
-
-        if(iter > 0){
-            //free_matrix(last_H);
-        }
-
-        printf("Iter %d Made it to end\n",iter);
         iter++;
     }
-    printf("diff : %f\n",diff);
-
+    if(iter>0){free_matrix(last_H);}
     return cur_H;
 }
 
@@ -353,7 +311,5 @@ int main(int argc, char* argv[]) {
     for (i = 0; i < vectors.size; i++) {
         free(vectors.v_list[i].x);
     }
-    /*free(vectors.v_list[i]);
-    free(vectors);*/
     return 0;
 }
