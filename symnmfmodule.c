@@ -3,28 +3,11 @@
 #include <stdio.h>
 #include "symnmf.h"
 
-/*typedef struct {
-    double* x;
-    int len;
-} Vector;
-
-typedef struct {
-    Vector* v_list;
-    int size;
-} List_vectors;
-
-typedef struct {
-    double** table;
-    int n_rows;
-    int n_cols;
-} Matrix;*/
-
 void free_list_vectors(List_vectors vectors){
 	int i;
 	for(i = 0; i < vectors.size; i++){
 		free(vectors.v_list[i].x);
 	}
-	/*free(vectors);*/
 }
 
 List_vectors create_c_points(PyObject *args){
@@ -121,7 +104,6 @@ static PyObject *Symnmf_Sym(PyObject *self, PyObject *args) {
     return create_py_matrix(ans);
 }
 
-// wrapper function for the ddg function
 static PyObject *Symnmf_Ddg(PyObject *self, PyObject *args) {
     Matrix ans;
     List_vectors vectors = create_c_points(args);
@@ -130,7 +112,6 @@ static PyObject *Symnmf_Ddg(PyObject *self, PyObject *args) {
     return create_py_matrix(ans);
 }
 
-// wrapper function for the norm function
 static PyObject *Symnmf_Norm(PyObject *self, PyObject *args) {
     Matrix ans;
     List_vectors vectors = create_c_points(args);
@@ -139,7 +120,6 @@ static PyObject *Symnmf_Norm(PyObject *self, PyObject *args) {
     return create_py_matrix(ans);
 }
 
-// wrapper function for the symnmf function
 static PyObject *Symnmf_Symnmf(PyObject *self, PyObject *args) {
     Matrix ans;
     Matrix H;
@@ -152,34 +132,31 @@ static PyObject *Symnmf_Symnmf(PyObject *self, PyObject *args) {
     W = create_c_matrix(lst2);
 
     ans = symnmf(H,W);
-    //free_matrix(H);
-    //free_matrix(W);
 
     return create_py_matrix(ans);
 }
 
-// module's function table
 static PyMethodDef Symnmf_FunctionsTable[] = {
     {
-        "sym", // name exposed to Python
-        Symnmf_Sym, // C wrapper function
-        METH_VARARGS, // received variable args (but really just 1)
-        "Calculates the Similarity Matrix of the given points" // documentation
+        "sym",
+        Symnmf_Sym,
+        METH_VARARGS,
+        "Calculates the Similarity Matrix of the given points"
     }, {
-        "ddg", // name exposed to Python
-        Symnmf_Ddg, // C wrapper function
-        METH_VARARGS, // received variable args (but really just 1)
-        "Calculates the Diagonal Degree Matrix of the given points" // documentation
+        "ddg",
+        Symnmf_Ddg,
+        METH_VARARGS,
+        "Calculates the Diagonal Degree Matrix of the given points"
     }, {
-        "norm", // name exposed to Python
-        Symnmf_Norm, // C wrapper function
-        METH_VARARGS, // received variable args (but really just 1)
-        "Calculates the Normalized Similarity Matrix of the given points" // documentation
+        "norm",
+        Symnmf_Norm,
+        METH_VARARGS,
+        "Calculates the Normalized Similarity Matrix of the given points"
     }, {
-        "symnmf", // name exposed to Python
-        Symnmf_Symnmf, // C wrapper function
-        METH_VARARGS, // received variable args (but really just 1)
-        "Calculates the Optimizing H Matrix of the W and H matrixes" // documentation
+        "symnmf",
+        Symnmf_Symnmf,
+        METH_VARARGS,
+        "Calculates the Optimizing H Matrix of the W and H matrixes"
     },{
         NULL, NULL, 0, NULL
     }
