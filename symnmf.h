@@ -22,9 +22,9 @@ typedef struct {
 } Matrix;
 
 /* Function Declarations */
-Matrix sym(List_vectors vectors);
-Matrix ddg(List_vectors vectors);
-Matrix norm(List_vectors vectors);
+Matrix sym(List_vectors* vectors);
+Matrix ddg(List_vectors* vectors);
+Matrix norm(List_vectors* vectors);
 Matrix symnmf(Matrix H, Matrix W);
 
 List_vectors read_points(char* filename);
