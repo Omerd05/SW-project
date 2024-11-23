@@ -141,11 +141,11 @@ Matrix* sym(List_vectors* vectors) {
 }
 
 Matrix* ddg(List_vectors* vectors) {
-    Matrix* matrix = malloc(sizeof(Matrix));
-    Matrix* D = malloc(sizeof(Matrix));
     int i,j;
     double sum;
     int N = vectors->size;
+    Matrix* matrix;
+    Matrix* D = malloc(sizeof(Matrix));
 
     matrix = sym(vectors);
 
@@ -173,8 +173,8 @@ Matrix* norm(List_vectors* vectors) {
     int N = vectors->size;
     int i,j;
     double tmp;
-    Matrix* A = malloc(sizeof(Matrix));
-    Matrix* D = malloc(sizeof(Matrix));
+    Matrix* A;
+    Matrix* D;
     Matrix* result = malloc(sizeof(Matrix));
     A = sym(vectors);
     D = ddg(vectors);
