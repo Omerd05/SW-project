@@ -65,8 +65,8 @@ List_vectors* create_c_points(PyObject *args){
 * auxiliary function used to convert our matrix in c to a list of lists in python
 */
 
-PyObject* create_py_matrix(Matrix ans){
-	int n = ans.n_rows, k = ans.n_cols;
+PyObject* create_py_matrix(Matrix* ans){
+	int n = ans->n_rows, k = ans->n_cols;
     PyObject *mat = PyList_New(n);
     PyObject *vec;
     PyObject *num;
@@ -75,12 +75,13 @@ PyObject* create_py_matrix(Matrix ans){
     for(i=0;i<n;i++){
         vec=PyList_New(k);
         for(j=0;j<k;j++){
-            num=Py_BuildValue("d",ans.table[i][j]);
+            num=Py_BuildValue("d",ans->table[i][j]);
             PyList_SetItem(vec, j, num);
         }
         PyList_SetItem(mat, i, vec);
     }
     free_matrix(ans);
+    free(ans);
     return mat;
 }
 
@@ -88,28 +89,28 @@ PyObject* create_py_matrix(Matrix ans){
 * auxiliary function used to convert python list into Matrix
 */
 
-Matrix create_c_matrix(PyObject *lst){
+Matrix* create_c_matrix(PyObject *lst){
     /*Initializing necessary variables*/
 	PyObject* item;
 	PyObject* item1;
-	Matrix mat;
+	Matrix* mat = malloc(sizeof(Matrix));
 	double er;
 	int n,i,j,d;
 	n = PyObject_Length(lst);
-	mat.n_rows = n;
-	mat.table = calloc(mat.n_rows,sizeof(double*));
+	mat->n_rows = n;
+	mat->table = calloc(mat->n_rows,sizeof(double*));
 
     /*Actual conversion*/
 	for(i = 0; i < n; i++){
 		item = PyList_GetItem(lst, i);
         d = PyObject_Length(item);
-        mat.n_cols = d;
+        mat->n_cols = d;
 
-        mat.table[i] = calloc(d,sizeof(double));
+        mat->table[i] = calloc(d,sizeof(double));
         for(j = 0; j < d; j++){
         	item1 = PyList_GetItem(item,j);
         	er = PyFloat_AsDouble(item1);
-        	mat.table[i][j] = er;
+        	mat->table[i][j] = er;
         }
 	}
 
@@ -118,7 +119,7 @@ Matrix create_c_matrix(PyObject *lst){
 
 /*Wrapper function for sym method*/
 static PyObject *Symnmf_Sym(PyObject *self, PyObject *args) {
-    Matrix ans;
+    Matrix* ans;
     List_vectors* vectors = create_c_points(args);
     ans = sym(vectors);
     free_list_vectors(vectors);
@@ -127,7 +128,7 @@ static PyObject *Symnmf_Sym(PyObject *self, PyObject *args) {
 
 /*Wrapper function for ddg method*/
 static PyObject *Symnmf_Ddg(PyObject *self, PyObject *args) {
-    Matrix ans;
+    Matrix* ans;
     List_vectors* vectors = create_c_points(args);
     ans = ddg(vectors);
     free_list_vectors(vectors);
@@ -136,7 +137,7 @@ static PyObject *Symnmf_Ddg(PyObject *self, PyObject *args) {
 
 /*Wrapper function for norm method*/
 static PyObject *Symnmf_Norm(PyObject *self, PyObject *args) {
-    Matrix ans;
+    Matrix* ans;
     List_vectors* vectors = create_c_points(args);
     ans = norm(vectors);
     free_list_vectors(vectors);
@@ -145,9 +146,9 @@ static PyObject *Symnmf_Norm(PyObject *self, PyObject *args) {
 
 /*Wrapper function for symnmf method*/
 static PyObject *Symnmf_Symnmf(PyObject *self, PyObject *args) {
-    Matrix ans;
-    Matrix H;
-    Matrix W;
+    Matrix* ans;
+    Matrix* H = malloc(sizeof(Matrix));
+    Matrix* W = malloc(sizeof(Matrix));
     PyObject *lst1, *lst2;
     if (!PyArg_ParseTuple(args, "OO", &lst1,&lst2)) {
         return NULL;
@@ -157,6 +158,8 @@ static PyObject *Symnmf_Symnmf(PyObject *self, PyObject *args) {
 
     ans = symnmf(H,W);
     free_matrix(W);
+    free(H);
+    free(W);
 
     return create_py_matrix(ans);
 }

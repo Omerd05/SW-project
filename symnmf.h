@@ -22,19 +22,10 @@ typedef struct {
 } Matrix;
 
 /* Function Declarations */
-Matrix sym(List_vectors* vectors);
-Matrix ddg(List_vectors* vectors);
-Matrix norm(List_vectors* vectors);
-Matrix symnmf(Matrix H, Matrix W);
+Matrix* sym(List_vectors* vectors);
+Matrix* ddg(List_vectors* vectors);
+Matrix* norm(List_vectors* vectors);
+Matrix* symnmf(Matrix* H, Matrix* W);
 
-List_vectors read_points(char* filename);
-
-void print_matrix(Matrix matrix);
-void free_matrix(Matrix matrix);
-void multiplication(Matrix A, Matrix B, Matrix* C);
-double calc_diff(Matrix A, Matrix B);
-Matrix transpose(Matrix A);
-double EuclidDist(Vector x1, Vector x2);
-double L2Norm(Vector x);
-
+void free_matrix(Matrix* matrix);
 #endif /* SYMNMF_H_ */
